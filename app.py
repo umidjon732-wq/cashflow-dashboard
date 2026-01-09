@@ -123,7 +123,7 @@ with tab1:
     st.title("🛡️ EXECUTIVE CASH FLOW SUMMARY")
     st.markdown("### 🔴 Critical liquidity risk by June")
 
-    def sum_on_date(date, scenario):
+def sum_on_date(date, scenario):
     d = pd.to_datetime(date).date()
     s = str(scenario).strip()
     return df[(df["Date"] == d) & (df["Scenario"] == s)]["Amount"].sum()
@@ -228,6 +228,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
