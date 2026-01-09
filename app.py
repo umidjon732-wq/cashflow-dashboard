@@ -177,7 +177,7 @@ fig.add_annotation(
     yanchor="bottom"
 )
 
-    st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
 
 # ---------------- TAB 2 ----------------
@@ -211,6 +211,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
