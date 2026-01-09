@@ -127,15 +127,35 @@ with tab1:
         d = pd.to_datetime(date).date()
         return df[(df["Date"] == d) & (df["Scenario"] == scenario)]["Amount"].sum()
 
-    jan = val("2026-01-31", "No Partners")
-    jun_np = val("2026-06-30", "No Partners")
-    jun_wp = val("2026-06-30", "With Partners")
+    def sum_on_date(date, scenario):
+    d = pd.to_datetime(date).date()
+    s = str(scenario).strip()
+    return df[(df["Date"] == d) & (df["Scenario"] == s)]["Amount"].sum()
+
+def peak_amount_bn(scenario, start="2026-01-01", end="2026-12-31"):
+    s = str(scenario).strip()
+    d1 = pd.to_datetime(start).date()
+    d2 = pd.to_datetime(end).date()
+
+    tmp = df[(df["Scenario"] == s) & (df["Date"] >= d1) & (df["Date"] <= d2)]
+    if tmp.empty:
+        return 0.0
+
+    daily = tmp.groupby("Date")["Amount"].sum().abs()
+    return float(daily.max() / 1e9)
+
+# January (точечная потребность на дату)
+jan = sum_on_date("2026-01-31", "No Partners")
+
+# Peak (максимальный дневной пик в диапазоне)
+jun_np = peak_amount_bn("No Partners", start="2026-01-01", end="2026-12-31")
+jun_wp = peak_amount_bn("With Partners", start="2026-01-01", end="2026-12-31")
 
     c1, c2, c3, c4 = st.columns(4)
 
     c1.metric("January Need", f"{abs(jan)/1e9:.1f} Bn")
-    c2.metric("June Peak (Base)", f"{abs(jun_np)/1e9:.1f} Bn")
-    c3.metric("June Peak (Partners)", f"{abs(jun_wp)/1e9:.1f} Bn")
+    c2.metric("June Peak (Base)", f"{jun_np:.1f} Bn")
+    c3.metric("June Peak (Partners)", f"{jun_wp:.1f} Bn")
     c4.metric("Days to Peak", "150 days")
 
     st.divider()
@@ -211,6 +231,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
