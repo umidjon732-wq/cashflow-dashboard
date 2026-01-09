@@ -123,14 +123,11 @@ with tab1:
     st.title("🛡️ EXECUTIVE CASH FLOW SUMMARY")
     st.markdown("### 🔴 Critical liquidity risk by June")
 
-    def val(date, scenario):
-        d = pd.to_datetime(date).date()
-        return df[(df["Date"] == d) & (df["Scenario"] == scenario)]["Amount"].sum()
-
     def sum_on_date(date, scenario):
     d = pd.to_datetime(date).date()
     s = str(scenario).strip()
     return df[(df["Date"] == d) & (df["Scenario"] == s)]["Amount"].sum()
+
 
 def peak_amount_bn(scenario, start="2026-01-01", end="2026-12-31"):
     s = str(scenario).strip()
@@ -231,6 +228,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
