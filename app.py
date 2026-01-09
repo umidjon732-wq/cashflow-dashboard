@@ -135,8 +135,11 @@ with tab1:
     st.divider()
     st.subheader("📉 Cash Outflow Projection")
 
-    monthly = df.groupby(["Date", "Scenario"], as_index=False)["Amount"].sum()
+        monthly = df.groupby(["Date", "Scenario"], as_index=False)["Amount"].sum()
     monthly["Amount"] = monthly["Amount"].abs() / 1e9
+
+    # ✅ ВАЖНО: делаем Date как datetime для Plotly
+    monthly["Date"] = pd.to_datetime(monthly["Date"])
 
     fig = px.line(
         monthly,
@@ -147,8 +150,9 @@ with tab1:
         template="plotly_white"
     )
 
+    # ✅ ВАЖНО: x тоже datetime
     fig.add_vline(
-        x=pd.to_datetime("2026-06-30").date(),
+        x=pd.to_datetime("2026-06-30"),
         line_dash="dash",
         annotation_text="CRITICAL PEAK"
     )
@@ -186,4 +190,5 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
