@@ -113,6 +113,12 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 # ---------------- TAB 1 ----------------
+tab1, tab2, tab3 = st.tabs([
+    "🛡 Executive Summary",
+    "🚨 January Actions",
+    "🧠 Scenarios"
+])
+
 with tab1:
     st.title("🛡️ EXECUTIVE CASH FLOW SUMMARY")
     st.markdown("### 🔴 Critical liquidity risk by June")
@@ -135,10 +141,12 @@ with tab1:
     st.divider()
     st.subheader("📉 Cash Outflow Projection")
 
-        monthly = df.groupby(["Date", "Scenario"], as_index=False)["Amount"].sum()
-    monthly["Amount"] = monthly["Amount"].abs() / 1e9
+    monthly = (
+        df.groupby(["Date", "Scenario"], as_index=False)["Amount"]
+        .sum()
+    )
 
-    # ✅ ВАЖНО: делаем Date как datetime для Plotly
+    monthly["Amount"] = monthly["Amount"].abs() / 1e9
     monthly["Date"] = pd.to_datetime(monthly["Date"])
 
     fig = px.line(
@@ -150,7 +158,6 @@ with tab1:
         template="plotly_white"
     )
 
-    # ✅ ВАЖНО: x тоже datetime
     fig.add_vline(
         x=pd.to_datetime("2026-06-30"),
         line_dash="dash",
@@ -158,6 +165,7 @@ with tab1:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 # ---------------- TAB 2 ----------------
 with tab2:
@@ -190,5 +198,6 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
