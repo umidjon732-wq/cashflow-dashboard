@@ -159,10 +159,10 @@ with tab1:
     )
 
     fig.add_vline(
-        x=pd.to_datetime("2026-06-30"),
-        line_dash="dash",
-        annotation_text="CRITICAL PEAK"
-    )
+    x="2026-06-30",
+    line_dash="dash",
+    annotation_text="CRITICAL PEAK"
+)
 
     st.plotly_chart(fig, use_container_width=True)
 
@@ -198,6 +198,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
