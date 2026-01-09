@@ -19,39 +19,45 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+import os
+
 # ---------------- DATA LOAD ----------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("master_cashflow_data.csv")
+    file_name = "master_cashflow_data.csv"
 
-    df.columns = [c.strip() for c in df.columns]
+    st.write("📂 Файлы в текущей директории:")
+    st.write(os.listdir("."))
 
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
-    df["Scenario"] = df["Scenario"].astype(str).str.strip()
+    if not os.path.exists(file_name):
+        st.error(f"❌ Файл {file_name} не найден")
+        st.stop()
 
-    df["Amount"] = (
-        df["Amount"]
-        .astype(str)
-        .str.replace(" ", "", regex=False)
-        .str.replace(",", "", regex=False)
-    )
-    df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
+    try:
+        df = pd.read_csv(file_name)
 
-    df = df.dropna(subset=["Date", "Scenario", "Amount"])
-    return df
+        df.columns = [c.strip() for c in df.columns]
 
-try:
-    df = load_data()
-except:
-    st.error("Файл master_cashflow_data.csv не найден или поврежден")
-    st.stop()
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
+        df["Scenario"] = df["Scenario"].astype(str).str.strip()
 
-# ---------------- NAVIGATION ----------------
-tab1, tab2, tab3 = st.tabs([
-    "🔥 Executive Dashboard",
-    "📅 January Crisis",
-    "⚖️ Scenarios"
-])
+        df["Amount"] = (
+            df["Amount"]
+            .astype(str)
+            .str.replace(" ", "", regex=False)
+            .str.replace(",", "", regex=False)
+        )
+        df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
+
+        df = df.dropna(subset=["Date", "Scenario", "Amount"])
+        return df
+
+    except Exception as e:
+        st.error("❌ Ошибка при чтении CSV")
+        st.exception(e)
+        st.stop()
+
+df = load_data()
 
 # ---------------- TAB 1 ----------------
 with tab1:
@@ -128,3 +134,4 @@ with tab3:
     })
 
     st.table(scenarios)
+
