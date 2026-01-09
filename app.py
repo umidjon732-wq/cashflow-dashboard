@@ -148,31 +148,31 @@ jan = sum_on_date("2026-01-31", "No Partners")
 jun_np = peak_amount_bn("No Partners", start="2026-01-01", end="2026-12-31")
 jun_wp = peak_amount_bn("With Partners", start="2026-01-01", end="2026-12-31")
 
-    c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric("January Need", f"{abs(jan)/1e9:.1f} Bn")
-    c2.metric("June Peak (Base)", f"{jun_np:.1f} Bn")
-    c3.metric("June Peak (Partners)", f"{jun_wp:.1f} Bn")
-    c4.metric("Days to Peak", "150 days")
+c1.metric("January Need", f"{abs(jan)/1e9:.1f} Bn")
+c2.metric("June Peak (Base)", f"{jun_np:.1f} Bn")
+c3.metric("June Peak (Partners)", f"{jun_wp:.1f} Bn")
+c4.metric("Days to Peak", "150 days")
 
-    st.divider()
-    st.subheader("📉 Cash Outflow Projection")
+st.divider()
+st.subheader("📉 Cash Outflow Projection")
 
-    monthly = (
-        df.groupby(["Date", "Scenario"], as_index=False)["Amount"]
-        .sum()
-    )
+monthly = (
+    df.groupby(["Date", "Scenario"], as_index=False)["Amount"]
+    .sum()
+)
 
-    monthly["Amount"] = monthly["Amount"].abs() / 1e9
-    monthly["Date"] = pd.to_datetime(monthly["Date"])
+monthly["Amount"] = monthly["Amount"].abs() / 1e9
+monthly["Date"] = pd.to_datetime(monthly["Date"])
 
-    fig = px.line(
-        monthly,
-        x="Date",
-        y="Amount",
-        color="Scenario",
-        markers=True,
-        template="plotly_white"
+fig = px.line(
+    monthly,
+    x="Date",
+    y="Amount",
+    color="Scenario",
+    markers=True,
+    template="plotly_white"
     )
 
 x_peak = pd.to_datetime("2026-06-30")
@@ -228,6 +228,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
