@@ -29,9 +29,29 @@ def load_from_excel(path):
 
 
 def load_from_csv(path):
-    df = pd.read_csv(path)
-    return prepare_cash_df(df), pd.DataFrame()
+    # CSV может быть с ; или , и иногда с "битой" строкой.
+    # Этот загрузчик максимально терпимый и не даст приложению упасть.
+    read_attempts = [
+        dict(sep=";", engine="python", encoding="utf-8", on_bad_lines="skip"),
+        dict(sep=",", engine="python", encoding="utf-8", on_bad_lines="skip"),
+        dict(sep=";", engine="python", encoding="cp1251", on_bad_lines="skip"),
+        dict(sep=",", engine="python", encoding="cp1251", on_bad_lines="skip"),
+    ]
 
+    last_err = None
+    for opts in read_attempts:
+        try:
+            df = pd.read_csv(path, **opts)
+            if df is not None and len(df.columns) >= 3:  # хотя бы Date/Scenario/Amount
+                st.info(f"✅ CSV прочитан (sep='{opts['sep']}', encoding='{opts['encoding']}'). Строк: {len(df)}")
+                return prepare_cash_df(df), pd.DataFrame()
+        except Exception as e:
+            last_err = e
+
+    st.error("❌ CSV не удалось корректно прочитать. Скорее всего, внутри есть строки с лишними разделителями или кавычками.")
+    if last_err:
+        st.exception(last_err)
+    st.stop()
 
 def prepare_cash_df(df):
     df.columns = [c.strip() for c in df.columns]
@@ -167,6 +187,7 @@ with tab3:
     })
 
     st.table(scenarios)
+
 
 
 
