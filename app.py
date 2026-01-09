@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 
 # ---------------- CONFIG ----------------
 st.set_page_config(
@@ -19,45 +20,97 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-import os
+# ---------------- HELPERS ----------------
+def _read_csv_safely(file_name: str) -> pd.DataFrame:
+    """
+    1) Сначала пробуем Excel-CSV с разделителем ';'
+    2) Если не вышло — пробуем ',' (на всякий случай)
+    """
+    last_err = None
+
+    for sep in [";", ","]:
+        try:
+            df = pd.read_csv(
+                file_name,
+                sep=sep,
+                encoding="utf-8-sig",
+                engine="python",
+                dtype=str,
+                keep_default_na=False
+            )
+            # Если файл случайно прочитался "в одну колонку" — это не наш sep
+            if df.shape[1] < 3:
+                raise ValueError(f"CSV parsed with sep='{sep}' but has too few columns: {df.shape[1]}")
+            return df
+        except Exception as e:
+            last_err = e
+
+    raise last_err
+
+
+def _normalize_amount(series: pd.Series) -> pd.Series:
+    """
+    Приводим суммы типа:
+    '2 908 937 442,38' -> 2908937442.38
+    '3500000000' -> 3500000000
+    """
+    s = series.astype(str).str.strip()
+
+    # убираем пробелы (разделители тысяч)
+    s = s.str.replace(" ", "", regex=False)
+
+    # превращаем десятичную запятую в точку
+    s = s.str.replace(",", ".", regex=False)
+
+    return pd.to_numeric(s, errors="coerce")
+
 
 # ---------------- DATA LOAD ----------------
 @st.cache_data
 def load_data():
     file_name = "master_cashflow_data.csv"
 
-    st.write("📂 Файлы в текущей директории:")
-    st.write(os.listdir("."))
-
     if not os.path.exists(file_name):
-        st.error(f"❌ Файл {file_name} не найден")
+        st.error(f"❌ Файл {file_name} не найден в репозитории/директории приложения.")
         st.stop()
 
     try:
-        df = pd.read_csv(file_name)
+        df = _read_csv_safely(file_name)
 
+        # чистим названия колонок
         df.columns = [c.strip() for c in df.columns]
 
+        # проверяем обязательные колонки
+        required = {"Item", "Date", "Scenario", "Amount"}
+        missing = required - set(df.columns)
+        if missing:
+            st.error(f"❌ В CSV не хватает колонок: {', '.join(sorted(missing))}")
+            st.stop()
+
+        # приведение типов
         df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
         df["Scenario"] = df["Scenario"].astype(str).str.strip()
+        df["Amount"] = _normalize_amount(df["Amount"])
 
-        df["Amount"] = (
-            df["Amount"]
-            .astype(str)
-            .str.replace(" ", "", regex=False)
-            .str.replace(",", "", regex=False)
-        )
-        df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
-
+        # удаляем битые строки
         df = df.dropna(subset=["Date", "Scenario", "Amount"])
+
         return df
 
     except Exception as e:
-        st.error("❌ Ошибка при чтении CSV")
+        st.error("❌ Ошибка при чтении CSV (скорее всего разделитель/формат строки).")
         st.exception(e)
         st.stop()
 
+
 df = load_data()
+
+# ---------------- UI: TABS ----------------
+tab1, tab2, tab3 = st.tabs([
+    "🛡️ Executive Summary",
+    "🚨 January Actions",
+    "🧠 Scenarios"
+])
 
 # ---------------- TAB 1 ----------------
 with tab1:
@@ -80,7 +133,6 @@ with tab1:
     c4.metric("Days to Peak", "150 days")
 
     st.divider()
-
     st.subheader("📉 Cash Outflow Projection")
 
     monthly = df.groupby(["Date", "Scenario"], as_index=False)["Amount"].sum()
